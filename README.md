@@ -1,3 +1,5 @@
-#First commit 
+download requirements 
 
-18/12/25 17:11
+to create file .streamlit/secrets.toml
+
+Input API keys into file
