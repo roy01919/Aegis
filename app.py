@@ -104,6 +104,7 @@ def call_local_llama(
         text = output["choices"][0]["text"]
         return text.strip()
 
+    # If no GGUF is found, fall back to Transformers directory.
     model, tokenizer = load_transformer_model(str(resolved_path))
     apply_chat = getattr(tokenizer, "apply_chat_template", None)
     if callable(apply_chat):
@@ -138,21 +139,28 @@ def main() -> None:
 
         st.markdown(f"**Active provider:** `{provider}`")
 
-        openai_model = st.selectbox("OpenAI model", ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"], index=0)
-        model_path = st.text_input(
-            "Local model path",
-            value="/home/roy/.llama/checkpoints/Llama3.1-8B-Instruct",
-            help="Path to a GGUF file or a local Transformers model directory.",
-        )
-        max_new_tokens = st.slider("Max new tokens", min_value=64, max_value=1024, value=256, step=64)
-        temperature = st.slider("Temperature", min_value=0.0, max_value=1.5, value=0.7, step=0.05)
-
-        if Path(model_path).expanduser().exists():
-            gguf_hint = find_gguf(Path(model_path).expanduser())
-            ready_text = "GGUF model detected." if gguf_hint else "Transformers model detected."
-            st.caption(f"Local model ready: {ready_text}")
+        if provider == "OpenAI":
+            openai_model = st.selectbox("OpenAI model", ["gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"], index=0)
+            model_path = None
+            max_new_tokens = None
+            temperature = None
         else:
-            st.caption("Local model path not found yet.")
+            openai_model = None
+            model_path = st.text_input(
+                "Local model path",
+                value="/home/roy/.llama/checkpoints/Llama3.1-8B-Instruct",
+                help="Path to a GGUF file or a local Transformers model directory.",
+            )
+            max_new_tokens = st.slider("Max new tokens", min_value=64, max_value=1024, value=256, step=64)
+            temperature = st.slider("Temperature", min_value=0.0, max_value=1.5, value=0.7, step=0.05)
+
+            resolved_model_path = Path(model_path).expanduser()
+            if resolved_model_path.exists():
+                gguf_hint = find_gguf(resolved_model_path)
+                ready_text = "GGUF model detected." if gguf_hint else "Transformers model detected."
+                st.caption(f"Local model ready: {ready_text} ({resolved_model_path})")
+            else:
+                st.caption(f"Local model path not found: {resolved_model_path}")
 
         if st.button("Clear chat", type="secondary"):
             st.session_state.messages = []
@@ -175,9 +183,9 @@ def main() -> None:
             else:
                 reply = call_local_llama(
                     st.session_state.messages,
-                    model_path=model_path,
-                    max_new_tokens=max_new_tokens,
-                    temperature=temperature,
+                    model_path=model_path or "",
+                    max_new_tokens=max_new_tokens or 256,
+                    temperature=temperature or 0.7,
                 )
 
             st.session_state.messages.append({"role": "assistant", "content": reply})
