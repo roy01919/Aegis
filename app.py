@@ -51,6 +51,10 @@ def find_gguf(model_path: Path) -> Optional[Path]:
         ggufs = sorted(model_path.glob("*.gguf"))
         if ggufs:
             return ggufs[0]
+        # Search one level deeper to catch common layouts like model_dir/*.gguf
+        ggufs = sorted(model_path.rglob("*.gguf"))
+        if ggufs:
+            return ggufs[0]
     return None
 
 
