@@ -13,7 +13,7 @@ except ImportError:
     Llama = None  # type: ignore
 
 
-st.set_page_config(page_title="Dual Provider Chatbot", page_icon="💬")
+st.set_page_config(page_title="Aegis Chatbot (Draft)", page_icon="💬")
 
 
 def get_secret(name: str) -> Optional[str]:
@@ -82,7 +82,7 @@ def call_openai(messages: List[ChatCompletionMessageParam], model: str, api_key:
     return completion.choices[0].message.content.strip()
 
 
-def call_local_llama(
+def call_local_phi(
     messages: List[Dict[str, str]],
     model_path: str,
     max_new_tokens: int = 256,
@@ -127,7 +127,7 @@ def call_local_llama(
 
 
 def main() -> None:
-    st.title("Dual Provider Chatbot")
+    st.title("Aegis Chatbot (Draft)")
     st.caption("Choose between OpenAI Chat Completions or a Hugging Face text-generation model.")
 
     if "messages" not in st.session_state:
@@ -135,7 +135,7 @@ def main() -> None:
 
     with st.sidebar:
         st.header("Settings")
-        provider = st.selectbox("Provider", ["OpenAI", "Local Llama 3.1 (8B)"])
+        provider = st.selectbox("Provider", ["OpenAI", "Phi-3.5"])
 
         st.markdown(f"**Active provider:** `{provider}`")
 
@@ -148,7 +148,7 @@ def main() -> None:
             openai_model = None
             model_path = st.text_input(
                 "Local model path",
-                value="/home/roy/.llama/checkpoints/Llama3.1-8B-Instruct",
+                value="/home/roy/.cache/huggingface/hub/models--microsoft--Phi-3.5-mini-instruct/snapshots/2fe192450127e6a83f7441aef6e3ca586c338b77",
                 help="Path to a GGUF file or a local Transformers model directory.",
             )
             max_new_tokens = st.slider("Max new tokens", min_value=64, max_value=1024, value=256, step=64)
@@ -181,7 +181,7 @@ def main() -> None:
                     return
                 reply = call_openai(st.session_state.messages, model=openai_model, api_key=openai_api_key)
             else:
-                reply = call_local_llama(
+                reply = call_local_phi(
                     st.session_state.messages,
                     model_path=model_path or "",
                     max_new_tokens=max_new_tokens or 256,
