@@ -104,7 +104,6 @@ def call_local_llama(
         text = output["choices"][0]["text"]
         return text.strip()
 
-    # If no GGUF is found, fall back to Transformers directory.
     model, tokenizer = load_transformer_model(str(resolved_path))
     apply_chat = getattr(tokenizer, "apply_chat_template", None)
     if callable(apply_chat):
@@ -135,7 +134,7 @@ def main() -> None:
 
     with st.sidebar:
         st.header("Settings")
-        provider = st.selectbox("Provider", ["OpenAI", "Local Llama 3.1 (8B)"])
+        provider = st.selectbox("Provider", ["OpenAI", "Phi-3.5-Mini"])
 
         st.markdown(f"**Active provider:** `{provider}`")
 
@@ -148,7 +147,7 @@ def main() -> None:
             openai_model = None
             model_path = st.text_input(
                 "Local model path",
-                value="/home/roy/.llama/checkpoints/Llama3.1-8B-Instruct",
+                value="/home/roy/.cache/huggingface/hub/models--microsoft--Phi-3.5-mini-instruct/snapshots/2fe192450127e6a83f7441aef6e3ca586c338b77",
                 help="Path to a GGUF file or a local Transformers model directory.",
             )
             max_new_tokens = st.slider("Max new tokens", min_value=64, max_value=1024, value=256, step=64)
@@ -183,9 +182,9 @@ def main() -> None:
             else:
                 reply = call_local_llama(
                     st.session_state.messages,
-                    model_path=model_path or "",
-                    max_new_tokens=max_new_tokens or 256,
-                    temperature=temperature or 0.7,
+                    model_path=model_path,
+                    max_new_tokens=max_new_tokens,
+                    temperature=temperature,
                 )
 
             st.session_state.messages.append({"role": "assistant", "content": reply})
